@@ -1,0 +1,8 @@
+Metric,Value
+Mean Absolute Error,50.426058475428434
+Root Mean Squared Error,72.55458270990182
+R2 Score,0.9978298478080542
+Mean Actual LTV,1845.60154589372
+Mean Predicted LTV,1840.9963141265803
+Mean Prediction Error,4.605231767139699
+Maximum Absolute Prediction Error,376.50874367800895
