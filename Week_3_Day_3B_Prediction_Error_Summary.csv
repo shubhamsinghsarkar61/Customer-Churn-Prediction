@@ -1,0 +1,7 @@
+Metric,Value
+Total Predictions,1035.0
+Mean Prediction Error,4.605231767139699
+Mean Absolute Error,50.426058475428434
+Median Absolute Error,31.823024930047723
+Maximum Absolute Error,376.50874367800895
+Minimum Absolute Error,0.025590291406388133
