@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import joblib
+import numpy as np
+import shap
 
 
 # =========================================================
@@ -85,6 +87,11 @@ def load_data():
 
 
 df = load_data()
+@st.cache_data
+def load_ltv_data():
+    return pd.read_csv("Week_3_Day_2_LTV_Segmented_Customers.csv")
+
+ltv_df = load_ltv_data()
 
 
 # =========================================================
@@ -1477,3 +1484,536 @@ with st.expander(
         width="stretch",
         height=400
     )
+# =========================================================
+# LTV INTELLIGENCE
+# =========================================================
+
+st.divider()
+
+st.header("💎 LTV Intelligence")
+
+st.markdown(
+    "Customer Lifetime Value analysis based on the existing LTV prediction and segmentation results."
+)
+ltv_col1, ltv_col2, ltv_col3, ltv_col4 = st.columns(4)
+
+avg_actual_ltv = ltv_df["Actual_LTV"].mean()
+avg_predicted_ltv = ltv_df["Predicted_LTV"].mean()
+high_ltv_customers = (ltv_df["LTV_Segment"] == "High LTV").sum()
+total_ltv_value = ltv_df["Actual_LTV"].sum()
+
+ltv_col1.metric(
+    "Average Actual LTV",
+    f"${avg_actual_ltv:,.2f}"
+)
+
+ltv_col2.metric(
+    "Average Predicted LTV",
+    f"${avg_predicted_ltv:,.2f}"
+)
+
+ltv_col3.metric(
+    "High-LTV Customers",
+    f"{high_ltv_customers:,}"
+)
+
+ltv_col4.metric(
+    "Total Customer LTV",
+    f"${total_ltv_value:,.2f}"
+)
+# =========================================================
+# LTV SEGMENT DISTRIBUTION
+# =========================================================
+
+st.subheader("📊 LTV Segment Distribution")
+
+ltv_segment_counts = (
+    ltv_df["LTV_Segment"]
+    .value_counts()
+    .reset_index()
+)
+
+ltv_segment_counts.columns = [
+    "LTV Segment",
+    "Customers"
+]
+
+fig_ltv_segment = px.bar(
+    ltv_segment_counts,
+    x="LTV Segment",
+    y="Customers",
+    text="Customers",
+    title="Customers by LTV Segment"
+)
+
+fig_ltv_segment.update_traces(
+    textposition="outside"
+)
+
+fig_ltv_segment.update_layout(
+    xaxis_title="LTV Segment",
+    yaxis_title="Number of Customers"
+)
+
+st.plotly_chart(
+    fig_ltv_segment,
+    width="stretch"
+)
+# =========================================================
+# AVERAGE LTV BY SEGMENT
+# =========================================================
+
+st.subheader("💰 Average LTV by Segment")
+
+avg_ltv_segment = (
+    ltv_df
+    .groupby("LTV_Segment")["Actual_LTV"]
+    .mean()
+    .reset_index()
+)
+
+fig_avg_ltv = px.bar(
+    avg_ltv_segment,
+    x="LTV_Segment",
+    y="Actual_LTV",
+    text="Actual_LTV",
+    title="Average Actual LTV by Segment"
+)
+
+fig_avg_ltv.update_traces(
+    texttemplate="$%{text:,.2f}",
+    textposition="outside"
+)
+
+fig_avg_ltv.update_layout(
+    xaxis_title="LTV Segment",
+    yaxis_title="Average LTV ($)"
+)
+
+st.plotly_chart(
+    fig_avg_ltv,
+    width="stretch"
+)
+# =========================================================
+# LTV PRIORITY MATRIX
+# =========================================================
+
+st.subheader("🎯 Churn Risk × LTV Priority")
+
+st.markdown(
+    "Customers with high churn probability and high LTV should receive the highest retention priority."
+)
+
+# Create LTV priority categories
+priority_df = ltv_df.copy()
+
+priority_df["LTV Priority"] = pd.cut(
+    priority_df["Predicted_LTV"],
+    bins=[-float("inf"), 1000, 2500, float("inf")],
+    labels=["Low LTV", "Medium LTV", "High LTV"]
+)
+
+priority_summary = (
+    priority_df
+    .groupby("LTV Priority", observed=False)
+    .agg(
+        Customers=("Predicted_LTV", "count"),
+        Average_LTV=("Predicted_LTV", "mean")
+    )
+    .reset_index()
+)
+
+fig_priority = px.bar(
+    priority_summary,
+    x="LTV Priority",
+    y="Customers",
+    text="Customers",
+    title="Customer Distribution by LTV Priority"
+)
+
+fig_priority.update_traces(
+    textposition="outside"
+)
+
+fig_priority.update_layout(
+    xaxis_title="LTV Priority",
+    yaxis_title="Number of Customers"
+)
+
+st.plotly_chart(
+    fig_priority,
+    width="stretch"
+)
+# =========================================================
+
+# CHURN RISK × LTV PRIORITY
+
+# =========================================================
+
+st.subheader("🔥 Churn Risk × LTV Priority")
+
+st.markdown(
+"Combining customer churn status with predicted LTV to identify high-value retention opportunities."
+)
+
+# Match the LTV records with the original customer dataset
+
+priority_customer_df = df.iloc[:len(ltv_df)].copy().reset_index(drop=True)
+priority_ltv_df = ltv_df.reset_index(drop=True)
+
+priority_customer_df["Predicted_LTV"] = (
+priority_ltv_df["Predicted_LTV"]
+)
+
+priority_customer_df["LTV_Segment"] = (
+priority_ltv_df["LTV_Segment"]
+)
+
+# Create churn status
+
+priority_customer_df["Churn Status"] = (
+priority_customer_df["Churn"]
+.map({
+"Yes": "Churned",
+"No": "Stayed"
+})
+)
+
+# Summary
+
+priority_summary = (
+priority_customer_df
+.groupby(
+["LTV_Segment", "Churn Status"]
+)
+.size()
+.reset_index(
+name="Customers"
+)
+)
+
+fig_priority_matrix = px.bar(
+priority_summary,
+x="LTV_Segment",
+y="Customers",
+color="Churn Status",
+barmode="group",
+text="Customers",
+title="LTV Segment vs Customer Churn Status"
+)
+
+fig_priority_matrix.update_traces(
+textposition="outside"
+)
+
+fig_priority_matrix.update_layout(
+xaxis_title="LTV Segment",
+yaxis_title="Number of Customers",
+legend_title="Customer Status"
+)
+
+st.plotly_chart(
+fig_priority_matrix,
+width="stretch"
+)
+
+# Priority insight
+
+high_ltv_churned = len(
+priority_customer_df[
+(priority_customer_df["LTV_Segment"] == "High LTV")
+& (priority_customer_df["Churn"] == "Yes")
+]
+)
+
+if high_ltv_churned > 0:
+    st.warning(
+     f"🚨 Priority Retention Opportunity: "
+     f"{high_ltv_churned:,} High-LTV customers are in the churned group. "
+     f"These customers represent valuable retention opportunities."
+)
+else:
+    st.success(
+     "✅ No High-LTV customers are currently classified as churned in this analysis."
+)
+# =========================================================
+# SHAP EXPLAINABILITY
+# =========================================================
+
+st.divider()
+
+st.header("🧠 AI Explainability — SHAP")
+
+st.markdown(
+    "Understand which customer features are influencing the XGBoost churn prediction."
+)
+# Select a customer for SHAP explanation
+customer_ids = filtered_df["customerID"].tolist()
+
+selected_customer = st.selectbox(
+    "Select a customer to explain:",
+    customer_ids
+)
+
+shap_row = filtered_df[
+    filtered_df["customerID"] == selected_customer
+].iloc[0]
+# Prepare customer data for SHAP
+shap_input = shap_row[
+    [
+        "gender",
+        "SeniorCitizen",
+        "Partner",
+        "Dependents",
+        "tenure",
+        "PhoneService",
+        "MultipleLines",
+        "InternetService",
+        "OnlineSecurity",
+        "OnlineBackup",
+        "DeviceProtection",
+        "TechSupport",
+        "StreamingTV",
+        "StreamingMovies",
+        "Contract",
+        "PaperlessBilling",
+        "PaymentMethod",
+        "MonthlyCharges",
+        "TotalCharges"
+    ]
+].to_frame().T.copy()
+
+# Create the same engineered features used during model training
+
+shap_input["TotalChargesPerTenure"] = (
+    shap_input["TotalCharges"] /
+    shap_input["tenure"].replace(0, 1)
+)
+
+shap_input["MonthlyChargePerTenure"] = (
+    shap_input["MonthlyCharges"] /
+    shap_input["tenure"].replace(0, 1)
+)
+
+service_columns = [
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies"
+]
+
+shap_input["ServiceCount"] = (
+    shap_input[service_columns]
+    .apply(lambda row: (row != "No").sum(), axis=1)
+)
+
+shap_input["MonthlyChargePerService"] = (
+    shap_input["MonthlyCharges"] /
+    shap_input["ServiceCount"].replace(0, 1)
+)
+
+shap_input["TotalServiceCount"] = (
+    shap_input[service_columns]
+    .apply(lambda row: (row != "No").sum(), axis=1)
+)
+
+shap_input["MonthlyChargePerTotalService"] = (
+    shap_input["MonthlyCharges"] /
+    shap_input["TotalServiceCount"].replace(0, 1)
+)
+
+shap_input["ServiceDensity"] = (
+    shap_input["ServiceCount"] /
+    len(service_columns)
+)
+
+shap_input["TotalChargesPerService"] = (
+    shap_input["TotalCharges"] /
+    shap_input["TotalServiceCount"].replace(0, 1)
+)
+
+# Create Tenure Group
+def create_tenure_group(tenure):
+    if tenure <= 12:
+        return "0–12 Months"
+    elif tenure <= 24:
+        return "13–24 Months"
+    elif tenure <= 48:
+        return "25–48 Months"
+    else:
+        return "49–72 Months"
+
+shap_input["TenureGroup"] = shap_input["tenure"].apply(create_tenure_group)
+# Calculate SHAP values
+try:
+    preprocessor = model.named_steps["preprocessor"]
+    xgb_model = model.named_steps["model"]
+
+    # Transform customer data using the same preprocessing
+    transformed_input = preprocessor.transform(shap_input)
+
+    # Convert sparse matrix to dense array if needed
+    if hasattr(transformed_input, "toarray"):
+        transformed_input = transformed_input.toarray()
+
+    # Create SHAP explainer
+    explainer = shap.TreeExplainer(xgb_model)
+
+    # Calculate SHAP values
+    shap_values = explainer.shap_values(transformed_input)
+
+    # Handle different SHAP output formats
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1]
+
+    shap_values = np.array(shap_values)
+
+    # Make sure we have one row
+    if shap_values.ndim == 2:
+        shap_values = shap_values[0]
+
+    # Get feature names after one-hot encoding
+    feature_names = preprocessor.get_feature_names_out()
+
+    # Create SHAP results table
+    shap_results = pd.DataFrame({
+        "Feature": feature_names,
+        "SHAP Value": shap_values
+    })
+
+    # Calculate absolute importance
+    shap_results["Importance"] = shap_results["SHAP Value"].abs()
+
+    # Sort by importance
+    shap_results = shap_results.sort_values(
+        "Importance",
+        ascending=False
+    )
+        # Get top 10 most influential features
+    top_shap = shap_results.head(10).copy()
+
+    # Clean feature names
+    top_shap["Feature"] = (
+        top_shap["Feature"]
+        .str.replace("num__", "", regex=False)
+        .str.replace("cat__", "", regex=False)
+    )
+
+    # Create SHAP chart
+    fig_shap = px.bar(
+        top_shap.sort_values("SHAP Value"),
+        x="SHAP Value",
+        y="Feature",
+        orientation="h",
+        title="Top 10 Churn Prediction Drivers",
+        labels={
+            "SHAP Value": "Impact on Churn Prediction",
+            "Feature": "Customer Feature"
+        }
+    )
+
+    fig_shap.add_vline(
+        x=0,
+        line_width=1,
+        line_dash="dash"
+    )
+
+    fig_shap.update_layout(
+        height=500,
+        showlegend=False
+    )
+
+    st.plotly_chart(
+        fig_shap,
+        use_container_width=True
+    )
+
+except Exception as e:
+    st.error("Unable to calculate SHAP explanation.")
+    st.exception(e)
+        # Get top 10 most influential features
+    top_shap = shap_results.head(10).copy()
+
+    # Clean feature names for display
+    top_shap["Feature"] = (
+        top_shap["Feature"]
+        .str.replace("num__", "", regex=False)
+        .str.replace("cat__", "", regex=False)
+    )
+
+    # Create SHAP bar chart
+    fig_shap = px.bar(
+        top_shap.sort_values("SHAP Value"),
+        x="SHAP Value",
+        y="Feature",
+        orientation="h",
+        title="Top 10 Churn Prediction Drivers",
+        labels={
+            "SHAP Value": "Impact on Churn Prediction",
+            "Feature": "Customer Feature"
+        }
+    )
+
+    fig_shap.add_vline(
+        x=0,
+        line_width=1,
+        line_dash="dash"
+    )
+
+    fig_shap.update_layout(
+        height=500,
+        showlegend=False
+    )
+
+    st.plotly_chart(
+        fig_shap,
+        use_container_width=True
+    )
+    # SHAP interpretation guide
+
+st.subheader("📖 How to Read This Chart")
+
+st.markdown(
+    """
+    - **Positive SHAP value** → pushes the prediction toward **churn**
+    - **Negative SHAP value** → pushes the prediction toward **staying**
+    - **Larger absolute value** → stronger influence on the prediction
+    """
+)
+st.subheader("🎯 Selected Customer Summary")
+
+summary_col1, summary_col2, summary_col3 = st.columns(3)
+
+summary_col1.metric(
+    "Customer ID",
+    selected_customer
+)
+
+summary_col2.metric(
+    "Monthly Charges",
+    f"${float(shap_row['MonthlyCharges']):.2f}"
+)
+
+summary_col3.metric(
+    "Tenure",
+    f"{int(shap_row['tenure'])} months"
+)
+st.subheader("🔍 Feature Impact Details")
+
+impact_table = top_shap[["Feature", "SHAP Value"]].copy()
+
+impact_table["Impact"] = impact_table["SHAP Value"].apply(
+    lambda x: "🔴 Increases Churn Risk"
+    if x > 0
+    else "🟢 Reduces Churn Risk"
+)
+
+impact_table["SHAP Value"] = impact_table["SHAP Value"].round(4)
+
+st.dataframe(
+    impact_table,
+    use_container_width=True,
+    hide_index=True
+)
