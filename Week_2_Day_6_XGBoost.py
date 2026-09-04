@@ -1,4 +1,5 @@
 import pandas as pd
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
@@ -16,7 +17,7 @@ from xgboost import XGBClassifier
 
 
 # ==========================================
-# DAY 6 - XGBOOST CUSTOMER CHURN PREDICTION
+# WEEK 2 - XGBOOST CUSTOMER CHURN PREDICTION
 # ==========================================
 
 # Load dataset
@@ -24,11 +25,22 @@ df = pd.read_csv("telco_customer_churn_day3_feature_engineered.csv")
 
 print("Dataset shape:", df.shape)
 
-# Features and target
-X = df.drop(columns=["Churn", "ChurnNumeric", "customerID"])
+
+# ==========================================
+# FEATURES AND TARGET
+# ==========================================
+
+X = df.drop(
+    columns=["Churn", "ChurnNumeric", "customerID"]
+)
+
 y = df["ChurnNumeric"]
 
-# Identify categorical and numerical columns
+
+# ==========================================
+# IDENTIFY COLUMN TYPES
+# ==========================================
+
 categorical_cols = X.select_dtypes(
     include=["object", "string"]
 ).columns.tolist()
@@ -37,7 +49,18 @@ numerical_cols = X.select_dtypes(
     exclude=["object", "string"]
 ).columns.tolist()
 
-# Preprocessing
+
+print("\nCategorical columns:")
+print(categorical_cols)
+
+print("\nNumerical columns:")
+print(numerical_cols)
+
+
+# ==========================================
+# PREPROCESSING
+# ==========================================
+
 preprocessor = ColumnTransformer(
     transformers=[
         (
@@ -47,13 +70,19 @@ preprocessor = ColumnTransformer(
         ),
         (
             "cat",
-            OneHotEncoder(handle_unknown="ignore"),
+            OneHotEncoder(
+                handle_unknown="ignore"
+            ),
             categorical_cols
         )
     ]
 )
 
-# XGBoost model
+
+# ==========================================
+# XGBOOST MODEL
+# ==========================================
+
 xgb_model = XGBClassifier(
     n_estimators=300,
     max_depth=4,
@@ -64,7 +93,11 @@ xgb_model = XGBClassifier(
     random_state=42
 )
 
-# Create pipeline
+
+# ==========================================
+# CREATE PIPELINE
+# ==========================================
+
 model = Pipeline(
     steps=[
         ("preprocessor", preprocessor),
@@ -72,7 +105,11 @@ model = Pipeline(
     ]
 )
 
-# Split data
+
+# ==========================================
+# TRAIN / TEST SPLIT
+# ==========================================
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -81,26 +118,78 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-print("Training records:", len(X_train))
+print("\nTraining records:", len(X_train))
 print("Testing records:", len(X_test))
 
-# Train model
-model.fit(X_train, y_train)
 
-print("\nXGBoost model trained successfully.")
+# ==========================================
+# TRAIN MODEL
+# ==========================================
 
-# Predictions
+print("\nTraining XGBoost model...")
+
+model.fit(
+    X_train,
+    y_train
+)
+
+print("XGBoost model trained successfully.")
+
+
+# ==========================================
+# SAVE TRAINED MODEL
+# ==========================================
+
+joblib.dump(
+    model,
+    "06_xgboost_model.pkl"
+)
+
+print("\nModel saved successfully!")
+print("File created: 06_xgboost_model.pkl")
+
+
+# ==========================================
+# PREDICTIONS
+# ==========================================
+
 y_pred = model.predict(X_test)
 
-# Metrics
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
 
-report = classification_report(y_test, y_pred)
+# ==========================================
+# MODEL METRICS
+# ==========================================
 
-# Display results
+accuracy = accuracy_score(
+    y_test,
+    y_pred
+)
+
+precision = precision_score(
+    y_test,
+    y_pred
+)
+
+recall = recall_score(
+    y_test,
+    y_pred
+)
+
+f1 = f1_score(
+    y_test,
+    y_pred
+)
+
+report = classification_report(
+    y_test,
+    y_pred
+)
+
+
+# ==========================================
+# DISPLAY RESULTS
+# ==========================================
+
 print("\n==========================================")
 print("XGBOOST RESULTS")
 print("==========================================")
@@ -110,51 +199,104 @@ print(f"Precision: {precision:.4f}")
 print(f"Recall:    {recall:.4f}")
 print(f"F1-score:  {f1:.4f}")
 
+
 print("\n==========================================")
 print("CLASSIFICATION REPORT")
 print("==========================================")
 
 print(report)
 
-# Save results
+
+# ==========================================
+# SAVE RESULTS
+# ==========================================
+
 with open(
     "06_xgboost_results.txt",
     "w"
 ) as file:
 
-    file.write("XGBOOST CUSTOMER CHURN PREDICTION\n")
-    file.write("=" * 45 + "\n\n")
+    file.write(
+        "XGBOOST CUSTOMER CHURN PREDICTION\n"
+    )
 
-    file.write(f"Dataset shape: {df.shape}\n")
-    file.write(f"Training records: {len(X_train)}\n")
-    file.write(f"Testing records: {len(X_test)}\n\n")
+    file.write(
+        "=" * 45 + "\n\n"
+    )
 
-    file.write(f"Accuracy: {accuracy:.4f}\n")
-    file.write(f"Precision: {precision:.4f}\n")
-    file.write(f"Recall: {recall:.4f}\n")
-    file.write(f"F1-score: {f1:.4f}\n\n")
+    file.write(
+        f"Dataset shape: {df.shape}\n"
+    )
 
-    file.write("CLASSIFICATION REPORT\n")
-    file.write("=" * 45 + "\n")
+    file.write(
+        f"Training records: {len(X_train)}\n"
+    )
+
+    file.write(
+        f"Testing records: {len(X_test)}\n\n"
+    )
+
+    file.write(
+        f"Accuracy: {accuracy:.4f}\n"
+    )
+
+    file.write(
+        f"Precision: {precision:.4f}\n"
+    )
+
+    file.write(
+        f"Recall: {recall:.4f}\n"
+    )
+
+    file.write(
+        f"F1-score: {f1:.4f}\n\n"
+    )
+
+    file.write(
+        "CLASSIFICATION REPORT\n"
+    )
+
+    file.write(
+        "=" * 45 + "\n"
+    )
+
     file.write(report)
 
-# Save predictions
+
+# ==========================================
+# SAVE PREDICTIONS
+# ==========================================
+
 predictions = pd.DataFrame({
-    "customerID": df.loc[X_test.index, "customerID"],
+    "customerID": df.loc[
+        X_test.index,
+        "customerID"
+    ],
+
     "Actual_Churn": y_test,
+
     "Predicted_Churn": y_pred
 })
+
 
 predictions.to_csv(
     "06_xgboost_predictions.csv",
     index=False
 )
 
+
+# ==========================================
+# FINAL OUTPUT
+# ==========================================
+
 print("\n==========================================")
 print("FILES CREATED")
 print("==========================================")
 
-print("06_xgboost_results.txt")
-print("06_xgboost_predictions.csv")
+print("1. 06_xgboost_model.pkl")
+print("2. 06_xgboost_results.txt")
+print("3. 06_xgboost_predictions.csv")
 
-print("\nDay 6 XGBoost completed successfully.")
+print("\n==========================================")
+print("WEEK 2 XGBOOST COMPLETED SUCCESSFULLY")
+print("==========================================")
