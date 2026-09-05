@@ -1,0 +1,22 @@
+XGBOOST CUSTOMER CHURN PREDICTION
+=============================================
+
+Dataset shape: (7043, 31)
+Training records: 5634
+Testing records: 1409
+
+Accuracy: 0.7913
+Precision: 0.6379
+Recall: 0.4947
+F1-score: 0.5572
+
+CLASSIFICATION REPORT
+=============================================
+              precision    recall  f1-score   support
+
+           0       0.83      0.90      0.86      1035
+           1       0.64      0.49      0.56       374
+
+    accuracy                           0.79      1409
+   macro avg       0.73      0.70      0.71      1409
+weighted avg       0.78      0.79      0.78      1409

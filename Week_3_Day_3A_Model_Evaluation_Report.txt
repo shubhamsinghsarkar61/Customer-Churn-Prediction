@@ -1,0 +1,32 @@
+============================================================
+WEEK 3 - DAY 3A
+LTV REGRESSION MODEL PERFORMANCE EVALUATION REPORT
+============================================================
+
+DATASET INFORMATION
+-------------------
+Total Prediction Records : 1035
+
+MODEL PERFORMANCE
+-----------------
+Mean Absolute Error (MAE)        : 50.43
+Root Mean Squared Error (RMSE)   : 72.55
+R² Score                         : 0.9978
+
+LTV SUMMARY
+-----------
+Mean Actual LTV                  : 1845.60
+Mean Predicted LTV               : 1841.00
+Mean Prediction Error            : 4.61
+Maximum Absolute Prediction Error: 376.51
+
+CONCLUSION
+----------
+The LTV regression model was evaluated using MAE, RMSE, and
+R² score. These metrics provide an overall assessment of
+prediction accuracy and model performance.
+
+The detailed prediction error analysis will be continued in
+Week 3 - Day 3B.
+
+============================================================
