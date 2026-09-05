@@ -622,6 +622,10 @@ else:
     # PREDICTION
     # -----------------------------------------------------
 
+    # Default prediction values
+    probability_percent = 0
+    prediction = 0
+    risk_level = "LOW"
     if predict_button:
 
         # Create tenure group
@@ -846,6 +850,11 @@ else:
                 tenure_group_value
             ]
         })
+
+        # Default prediction values
+        probability_percent = 0
+        prediction = 0
+        risk_level = "LOW"
 
         try:
 
@@ -1796,6 +1805,9 @@ shap_input["MonthlyChargePerTenure"] = (
 )
 
 service_columns = [
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
     "OnlineSecurity",
     "OnlineBackup",
     "DeviceProtection",
@@ -1933,44 +1945,7 @@ try:
 except Exception as e:
     st.error("Unable to calculate SHAP explanation.")
     st.exception(e)
-        # Get top 10 most influential features
-    top_shap = shap_results.head(10).copy()
-
-    # Clean feature names for display
-    top_shap["Feature"] = (
-        top_shap["Feature"]
-        .str.replace("num__", "", regex=False)
-        .str.replace("cat__", "", regex=False)
-    )
-
-    # Create SHAP bar chart
-    fig_shap = px.bar(
-        top_shap.sort_values("SHAP Value"),
-        x="SHAP Value",
-        y="Feature",
-        orientation="h",
-        title="Top 10 Churn Prediction Drivers",
-        labels={
-            "SHAP Value": "Impact on Churn Prediction",
-            "Feature": "Customer Feature"
-        }
-    )
-
-    fig_shap.add_vline(
-        x=0,
-        line_width=1,
-        line_dash="dash"
-    )
-
-    fig_shap.update_layout(
-        height=500,
-        showlegend=False
-    )
-
-    st.plotly_chart(
-        fig_shap,
-        use_container_width=True
-    )
+        
     # SHAP interpretation guide
 
 st.subheader("📖 How to Read This Chart")
