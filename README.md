@@ -152,7 +152,7 @@ Customer-Churn-Prediction/
 ├── Week_4_Day_1_to_3_Visualization_API_Integration.ipynb
 ├── Week_4_Day_3_Data_Validation.sql
 │
-├── dashboard.py
+├── week_4_day_4_interactive_dashboard.py
 │
 ├── Dockerfile
 ├── requirements.txt
@@ -898,7 +898,7 @@ The dashboard includes:
 
 ### 📁 Files Created / Updated
 
-- `dashboard.py`
+- `week_4_day_4_interactive_dashboard.py`
 - `06_xgboost_model.pkl`
 
 ### ✅ Day 4 Outcome
@@ -973,7 +973,7 @@ This supports more targeted and data-driven customer retention strategies.
 
 ### 📁 Files Created / Updated
 
-- `dashboard.py`
+- `week_4_day_4_interactive_dashboard.py`
 - `06_xgboost_model.pkl`
 - `Week_3_Day_2_LTV_Segmented_Customers.csv`
 
