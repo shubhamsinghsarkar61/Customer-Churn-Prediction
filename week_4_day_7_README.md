@@ -2,9 +2,37 @@
 
 ## 📌 Project Overview
 
-This project focuses on analyzing customer churn data for a telecom company. The main goal is to understand customer characteristics, service details, contract types, payment methods, and monthly charges that can help in studying customer churn.
+Our project is a Customer Churn Prediction and Lifetime Value Engine designed to help businesses identify customers who are likely to leave and understand their value.
 
-The project is being developed step by step using SQL and PostgreSQL, with the work maintained through Git and GitHub.
+The main innovation is that our system is not limited to analyzing existing customers. It can also take the details of a new or individual customer entered by the user and predict their churn probability.
+
+For a new customer, the system takes information such as tenure, contract type, monthly charges, internet service, payment method, and subscribed services. Our trained XGBoost model processes these details and predicts whether the customer is at low, medium, or high churn risk.
+
+We then go one step further by using SHAP explainability to show why the customer received that prediction. We also combine this with Lifetime Value analysis to understand how valuable the customer is to the business.
+
+Finally, all these insights are presented through an interactive dashboard, allowing the business to identify high-risk and high-value customers and take retention actions earlier.
+
+⭐ Innovation in one sentence
+
+The innovation of our project is that a business can enter the details of a new or individual customer and immediately get their churn risk, the reasons behind that risk, and their estimated customer value in one system.
+  
+  " SIMPLE WORK FLOW"
+
+   Customer Data
+      ↓
+Data Analysis & EDA
+      ↓
+Feature Engineering
+      ↓
+Churn Prediction
+      ↓
+Risk & SHAP Explanation
+      ↓
+LTV Prediction
+      ↓
+Individual Customer Prediction
+      ↓
+Interactive Dashboard
 
 ## 📂 Dataset
 
@@ -1087,7 +1115,7 @@ The final system provides:
 - ⚠️ Customer risk classification
 - 🔍 SHAP-based explainability
 - 💰 LTV intelligence
-- 📈 Interactive visualizations
+- 📈 Interactive visualizations(http://localhost:8510/)
 - 🐳 Docker-based deployment
 - 📚 Complete technical documentation
 
