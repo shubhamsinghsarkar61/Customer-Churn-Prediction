@@ -1059,6 +1059,7 @@ The following features were verified successfully:
    - Docker container running successfully
    - Streamlit application accessible through port `8501`
    - Dashboard features working inside the container
+   -http://localhost:8510/
 
 ### 📚 Technical Documentation
 
